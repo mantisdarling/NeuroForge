@@ -22,3 +22,5 @@
 - [x] Verify the motion refinement across desktop, mobile, reduced-motion settings, production build, and the live deployment.
 - [x] Apply consistent hover-matched visible focus states to every keyboard-reachable interactive element.
 - [x] Verify logical tab order, visible focus indicators, reduced-motion behavior, production build, and deployed keyboard navigation.
+- [x] Add a keyboard-accessible high-contrast toggle in the navigation while retaining the existing theme as the default.
+- [x] Persist the user’s contrast preference and verify its contrast, mobile layout, keyboard behavior, production build, and live deployment.

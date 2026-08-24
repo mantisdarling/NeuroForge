@@ -42,6 +42,14 @@ function scrollToId(id: string): void {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function initialHighContrast(): boolean {
+  try {
+    return window.localStorage.getItem("neuroforge-high-contrast") === "true";
+  } catch {
+    return false;
+  }
+}
+
 export default function App() {
   const [datasetId, setDatasetId] = useState<DatasetId>("xor");
   const [width, setWidth] = useState(8);
@@ -52,6 +60,7 @@ export default function App() {
   const [isTraining, setIsTraining] = useState(false);
   const [activeStep, setActiveStep] = useState(-1);
   const [guideStep, setGuideStep] = useState<number | null>(0);
+  const [highContrast, setHighContrast] = useState(initialHighContrast);
   const reducedMotion = useReducedMotion();
 
   const dataset = session.dataset;
@@ -65,6 +74,14 @@ export default function App() {
     setIsTraining(false);
     setActiveStep(-1);
   }, [datasetId, width, batchSize]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("neuroforge-high-contrast", String(highContrast));
+    } catch {
+      // The visual preference remains optional when browser storage is unavailable.
+    }
+  }, [highContrast]);
 
   useEffect(() => {
     if (!isTraining) return;
@@ -103,12 +120,12 @@ export default function App() {
   const advanceGuide = () => setGuideStep((value) => value === null || value >= 2 ? null : value + 1);
 
   return (
-    <main className="site-shell">
+    <main className={highContrast ? "site-shell high-contrast" : "site-shell"}>
       <AmbientField />
       <header className="global-nav">
         <a className="brand" href="#top" aria-label="NeuroForge home"><span className="brand-mark" aria-hidden="true"><span /><span /><span /></span><span>NEURO<span>FORGE</span></span></a>
         <nav aria-label="Primary navigation"><a href="#lab">Live lab</a><a href="#studies">Studies</a><a href="#method">Method</a><a href="#engine">Engine</a></nav>
-        <button className="nav-action" onClick={() => scrollToId("lab")}><span aria-hidden="true">↘</span> Inspect live lab</button>
+        <div className="nav-tools"><button className="contrast-toggle" type="button" aria-pressed={highContrast} aria-label={highContrast ? "Disable high contrast" : "Enable high contrast"} onClick={() => setHighContrast((value) => !value)}><span className="contrast-glyph" aria-hidden="true">◐</span><span className="contrast-label">High contrast</span></button><button className="nav-action" onClick={() => scrollToId("lab")}><span aria-hidden="true">↘</span> Inspect live lab</button></div>
       </header>
 
       <section className="hero-field" id="top">
