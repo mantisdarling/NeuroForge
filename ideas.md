@@ -14,3 +14,6 @@ The design prioritizes traceable computation, purposeful hierarchy, quiet precis
 - The forward/reverse node-and-arc geometry recurs in signal spines, edge chevrons, state markers, and graph headings as NeuroForge’s visual fingerprint.
 - Operational copy names the observable action or evidence state, such as “Trace next backward pass,” rather than generic UI verbs.
 - The product now uses a long-form learning-instrument arc: an expansive evidence-led hero, a full-width operational lab, a reverse-mode method section, a compact engine specification field, and a final route back into the live lab. This adds product scale without borrowing the reference product’s composition or visual treatment.
+- The hero computation graph visually outranks the statement copy through greater scale, denser instrument framing, and prominent forward/reverse/loss states.
+- The wordmark functions as a precision instrument lockup: a larger signal mark, technical signature label, and consistent underline geometry preserve recognition at small scale.
+- Major chapters each receive a distinct observational role through signal spines, trace fields, formula bands, or evidence rails; amber is reserved for loss, verification, caution, and consequence.

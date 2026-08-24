@@ -24,3 +24,5 @@
 - [x] Verify logical tab order, visible focus indicators, reduced-motion behavior, production build, and deployed keyboard navigation.
 - [x] Add a keyboard-accessible high-contrast toggle in the navigation while retaining the existing theme as the default.
 - [x] Persist the user’s contrast preference and verify its contrast, mobile layout, keyboard behavior, production build, and live deployment.
+- [x] Elevate the dark ambient field with layered depth and restrained premium motion without changing the existing color system.
+- [x] Verify background readability, desktop and mobile composition, reduced-motion behavior, production build, and live deployment.

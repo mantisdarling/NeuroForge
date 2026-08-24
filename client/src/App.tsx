@@ -123,7 +123,7 @@ export default function App() {
     <main className={highContrast ? "site-shell high-contrast" : "site-shell"}>
       <AmbientField />
       <header className="global-nav">
-        <a className="brand" href="#top" aria-label="NeuroForge home"><span className="brand-mark" aria-hidden="true"><span /><span /><span /></span><span>NEURO<span>FORGE</span></span></a>
+        <a className="brand" href="#top" aria-label="NeuroForge home"><span className="brand-mark" aria-hidden="true"><span /><span /><span /></span><span className="brand-lockup"><span>NEURO<span>FORGE</span></span><small>OBSERVATORY</small></span></a>
         <nav aria-label="Primary navigation"><a href="#lab">Live lab</a><a href="#studies">Studies</a><a href="#method">Method</a><a href="#engine">Engine</a></nav>
         <div className="nav-tools"><button className="contrast-toggle" type="button" aria-pressed={highContrast} aria-label={highContrast ? "Disable high contrast" : "Enable high contrast"} onClick={() => setHighContrast((value) => !value)}><span className="contrast-glyph" aria-hidden="true">◐</span><span className="contrast-label">High contrast</span></button><button className="nav-action" onClick={() => scrollToId("lab")}><span aria-hidden="true">↘</span> Inspect live lab</button></div>
       </header>

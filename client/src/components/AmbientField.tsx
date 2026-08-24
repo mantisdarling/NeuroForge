@@ -18,6 +18,7 @@ export function AmbientField() {
     let frame = 0;
     let active = !document.hidden;
     let particles: Particle[] = [];
+    let lastDraw = 0;
 
     const createParticle = (index: number): Particle => ({
       x: Math.random() * width,
@@ -37,12 +38,32 @@ export function AmbientField() {
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      const count = width < 700 ? 12 : 24;
+      const count = width < 700 ? 9 : 16;
       particles = Array.from({ length: count }, (_, index) => createParticle(index));
     };
 
-    const draw = () => {
+    const draw = (time: number) => {
       context.clearRect(0, 0, width, height);
+      const drift = time * 0.00011;
+      const wash = context.createRadialGradient(width * (0.68 + Math.sin(drift) * 0.07), height * (0.23 + Math.cos(drift * 0.7) * 0.05), 0, width * 0.68, height * 0.23, Math.max(width, height) * 0.66);
+      wash.addColorStop(0, "rgba(49, 211, 198, 0.1)");
+      wash.addColorStop(0.42, "rgba(49, 211, 198, 0.025)");
+      wash.addColorStop(1, "rgba(49, 211, 198, 0)");
+      context.fillStyle = wash;
+      context.fillRect(0, 0, width, height);
+
+      for (let lane = 0; lane < 3; lane += 1) {
+        context.strokeStyle = lane === 1 ? "rgba(245, 185, 66, 0.045)" : "rgba(49, 211, 198, 0.065)";
+        context.lineWidth = 0.7;
+        context.beginPath();
+        for (let x = -40; x <= width + 40; x += 34) {
+          const y = height * (0.19 + lane * 0.29) + Math.sin(x * 0.0034 + drift * (lane + 1.2)) * (15 + lane * 5);
+          if (x < 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        }
+        context.stroke();
+      }
+
       for (const particle of particles) {
         particle.x += particle.driftX;
         particle.y += particle.driftY;
@@ -81,24 +102,27 @@ export function AmbientField() {
       }
     };
 
-    const animate = () => {
+    const animate = (time: number) => {
       if (!active) return;
-      draw();
+      if (time - lastDraw >= 33) {
+        draw(time);
+        lastDraw = time;
+      }
       frame = window.requestAnimationFrame(animate);
     };
 
     const handleVisibility = () => {
-      active = !document.hidden;
+      active = !document.hidden && !reducedMotion.matches;
       if (active) frame = window.requestAnimationFrame(animate);
       else window.cancelAnimationFrame(frame);
     };
 
     const handleMotionPreference = () => {
-      if (reducedMotion.matches) {
-        active = false;
+      active = !document.hidden && !reducedMotion.matches;
+      if (!active) {
         context.clearRect(0, 0, width, height);
         window.cancelAnimationFrame(frame);
-      }
+      } else frame = window.requestAnimationFrame(animate);
     };
 
     resize();
