@@ -304,6 +304,73 @@ export class Tensor {
     return output;
   }
 
+  flatten(startDimension = 1): Tensor {
+    if (startDimension < 0 || startDimension >= this.shape.length) throw new Error("flatten() startDimension must be a valid tensor axis.");
+    const leading = this.shape.slice(0, startDimension);
+    const flattened = this.shape.slice(startDimension).reduce((product, dimension) => product * dimension, 1);
+    const output = this.operationResult([...this.data], [...leading, flattened], [this], "flatten");
+    if (output.requiresGrad) output.backwardRule = () => addInto(this.grad, output.grad);
+    return output;
+  }
+
+  conv2d(kernel: Tensor, bias?: Tensor): Tensor {
+    if (this.shape.length !== 4 || kernel.shape.length !== 4) throw new Error("conv2d() expects input [batch, channels, height, width] and kernel [filters, channels, height, width].");
+    const [batch, channels, inputHeight, inputWidth] = this.shape;
+    const [filters, kernelChannels, kernelHeight, kernelWidth] = kernel.shape;
+    if (channels !== kernelChannels) throw new Error("conv2d() channel count must match kernel channels.");
+    if (bias && (bias.shape.length !== 1 || bias.shape[0] !== filters)) throw new Error("conv2d() bias must have one entry per filter.");
+    const outputHeight = inputHeight - kernelHeight + 1;
+    const outputWidth = inputWidth - kernelWidth + 1;
+    if (outputHeight <= 0 || outputWidth <= 0) throw new Error("conv2d() kernel must fit within the input.");
+    const inputOffset = (batchIndex: number, channel: number, row: number, column: number) => ((batchIndex * channels + channel) * inputHeight + row) * inputWidth + column;
+    const kernelOffset = (filter: number, channel: number, row: number, column: number) => ((filter * channels + channel) * kernelHeight + row) * kernelWidth + column;
+    const outputOffset = (batchIndex: number, filter: number, row: number, column: number) => ((batchIndex * filters + filter) * outputHeight + row) * outputWidth + column;
+    const data = Array(batch * filters * outputHeight * outputWidth).fill(0);
+    for (let sample = 0; sample < batch; sample += 1) for (let filter = 0; filter < filters; filter += 1) for (let row = 0; row < outputHeight; row += 1) for (let column = 0; column < outputWidth; column += 1) {
+      let value = bias ? bias.data[filter] : 0;
+      for (let channel = 0; channel < channels; channel += 1) for (let kernelRow = 0; kernelRow < kernelHeight; kernelRow += 1) for (let kernelColumn = 0; kernelColumn < kernelWidth; kernelColumn += 1) value += this.data[inputOffset(sample, channel, row + kernelRow, column + kernelColumn)] * kernel.data[kernelOffset(filter, channel, kernelRow, kernelColumn)];
+      data[outputOffset(sample, filter, row, column)] = value;
+    }
+    const parents = bias ? [this, kernel, bias] : [this, kernel];
+    const output = this.operationResult(data, [batch, filters, outputHeight, outputWidth], parents, "conv2d");
+    if (output.requiresGrad) output.backwardRule = () => {
+      for (let sample = 0; sample < batch; sample += 1) for (let filter = 0; filter < filters; filter += 1) for (let row = 0; row < outputHeight; row += 1) for (let column = 0; column < outputWidth; column += 1) {
+        const upstream = output.grad[outputOffset(sample, filter, row, column)];
+        if (bias?.requiresGrad) bias.grad[filter] += upstream;
+        for (let channel = 0; channel < channels; channel += 1) for (let kernelRow = 0; kernelRow < kernelHeight; kernelRow += 1) for (let kernelColumn = 0; kernelColumn < kernelWidth; kernelColumn += 1) {
+          const sourceIndex = inputOffset(sample, channel, row + kernelRow, column + kernelColumn);
+          const kernelIndex = kernelOffset(filter, channel, kernelRow, kernelColumn);
+          if (this.requiresGrad) this.grad[sourceIndex] += upstream * kernel.data[kernelIndex];
+          if (kernel.requiresGrad) kernel.grad[kernelIndex] += upstream * this.data[sourceIndex];
+        }
+      }
+    };
+    return output;
+  }
+
+  maxPool2d(window = 2): Tensor {
+    if (this.shape.length !== 4 || !Number.isInteger(window) || window < 1) throw new Error("maxPool2d() expects a rank-4 tensor and a positive integer window.");
+    const [batch, channels, height, width] = this.shape;
+    const outputHeight = Math.floor(height / window);
+    const outputWidth = Math.floor(width / window);
+    const inputOffset = (sample: number, channel: number, row: number, column: number) => ((sample * channels + channel) * height + row) * width + column;
+    const outputOffset = (sample: number, channel: number, row: number, column: number) => ((sample * channels + channel) * outputHeight + row) * outputWidth + column;
+    const maxima = Array(batch * channels * outputHeight * outputWidth).fill(0);
+    const data = maxima.map((_, outputIndex) => {
+      const [sample, channel, row, column] = coordinatesOf(outputIndex, [batch, channels, outputHeight, outputWidth]);
+      let bestIndex = inputOffset(sample, channel, row * window, column * window);
+      for (let deltaRow = 0; deltaRow < window; deltaRow += 1) for (let deltaColumn = 0; deltaColumn < window; deltaColumn += 1) {
+        const candidate = inputOffset(sample, channel, row * window + deltaRow, column * window + deltaColumn);
+        if (this.data[candidate] > this.data[bestIndex]) bestIndex = candidate;
+      }
+      maxima[outputOffset(sample, channel, row, column)] = bestIndex;
+      return this.data[bestIndex];
+    });
+    const output = this.operationResult(data, [batch, channels, outputHeight, outputWidth], [this], "maxPool2d");
+    if (output.requiresGrad) output.backwardRule = () => output.grad.forEach((gradient, index) => { this.grad[maxima[index]] += gradient; });
+    return output;
+  }
+
   softmax(): Tensor {
     if (this.shape.length > 2) throw new Error("softmax() supports vectors or rank-2 tensors.");
     const classes = this.shape.at(-1) ?? 1;
@@ -350,4 +417,3 @@ export class Tensor {
     return [...this.data];
   }
 }
-

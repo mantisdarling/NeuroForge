@@ -38,6 +38,26 @@ export class Linear implements Layer {
   }
 }
 
+export class Conv2D implements Layer {
+  readonly weight: Tensor;
+  readonly bias: Tensor;
+
+  constructor(inputChannels: number, outputChannels: number, kernelSize: number, random: Random, label = "conv") {
+    const scale = Math.sqrt(2 / (inputChannels * kernelSize * kernelSize));
+    this.weight = Tensor.from(Array.from({ length: outputChannels * inputChannels * kernelSize * kernelSize }, () => (random() * 2 - 1) * scale), [outputChannels, inputChannels, kernelSize, kernelSize], true, `${label}.weight`);
+    this.bias = Tensor.zeros([outputChannels], true, `${label}.bias`);
+  }
+
+  forward(input: Tensor): Tensor { return input.conv2d(this.weight, this.bias); }
+  parameters(): Tensor[] { return [this.weight, this.bias]; }
+}
+
+export class MaxPool2D implements Layer {
+  constructor(private readonly window = 2) {}
+  forward(input: Tensor): Tensor { return input.maxPool2d(this.window); }
+  parameters(): Tensor[] { return []; }
+}
+
 export class ReLU implements Layer {
   forward(input: Tensor): Tensor { return input.relu(); }
   parameters(): Tensor[] { return []; }
@@ -87,6 +107,35 @@ export class SGD {
   }
 }
 
+export class Adam {
+  private readonly firstMoment = new Map<Tensor, number[]>();
+  private readonly secondMoment = new Map<Tensor, number[]>();
+  private stepCount = 0;
+
+  constructor(readonly parameters: Tensor[], readonly learningRate = 0.002, private readonly beta1 = 0.9, private readonly beta2 = 0.999, private readonly epsilon = 1e-8) {
+    if (learningRate <= 0 || learningRate > 1) throw new Error("Adam learningRate must be in (0, 1].");
+  }
+
+  zeroGrad(): void { this.parameters.forEach((parameter) => parameter.zeroGrad()); }
+
+  step(): void {
+    this.stepCount += 1;
+    this.parameters.forEach((parameter) => {
+      const first = this.firstMoment.get(parameter) ?? Array(parameter.size).fill(0);
+      const second = this.secondMoment.get(parameter) ?? Array(parameter.size).fill(0);
+      parameter.data.forEach((_value, index) => {
+        first[index] = this.beta1 * first[index] + (1 - this.beta1) * parameter.grad[index];
+        second[index] = this.beta2 * second[index] + (1 - this.beta2) * parameter.grad[index] ** 2;
+        const correctedFirst = first[index] / (1 - this.beta1 ** this.stepCount);
+        const correctedSecond = second[index] / (1 - this.beta2 ** this.stepCount);
+        parameter.data[index] -= this.learningRate * correctedFirst / (Math.sqrt(correctedSecond) + this.epsilon);
+      });
+      this.firstMoment.set(parameter, first);
+      this.secondMoment.set(parameter, second);
+    });
+  }
+}
+
 export function meanSquaredError(prediction: Tensor, target: Tensor): Tensor {
   return prediction.sub(target).pow(2).mean();
 }
@@ -96,4 +145,3 @@ export function crossEntropy(logits: Tensor, oneHotTarget: Tensor): Tensor {
   if (logits.shape[0] !== oneHotTarget.shape[0] || logits.shape[1] !== oneHotTarget.shape[1]) throw new Error("crossEntropy() target shape must match logits.");
   return logits.softmax().log().mul(oneHotTarget).sum().mul(-1 / logits.shape[0]);
 }
-

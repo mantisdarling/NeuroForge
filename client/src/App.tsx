@@ -1,11 +1,13 @@
 /** Signal Observatory: a large-scale, asymmetric learning instrument with an expansive hero, a full live lab, and a technical story from trace to proof. */
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { DecisionField } from "./components/DecisionField";
 import { GuidedTrack } from "./components/GuidedTrack";
 import { GraphCanvas } from "./components/GraphCanvas";
 import { HeroSignalMap } from "./components/HeroSignalMap";
 import { LossTrace } from "./components/LossTrace";
 import { type DatasetId, TrainingSession, type TrainingSnapshot } from "./engine/training";
+
+const AdvancedLearningLab = lazy(async () => ({ default: (await import("./components/AdvancedLearningLab")).AdvancedLearningLab }));
 
 const DATASETS: { id: DatasetId; title: string; description: string; marker: string }[] = [
   { id: "xor", title: "XOR", description: "A minimal nonlinear boundary.", marker: "01" },
@@ -16,7 +18,7 @@ const DATASETS: { id: DatasetId; title: string; description: string; marker: str
 const ENGINE_NOTES = [
   ["TAPE", "Parent references + local rules", "The graph stays explicit, so every value has an inspectable origin."],
   ["ORDER", "Topological reverse traversal", "A scalar loss seeds the pass; shared parents accumulate all valid paths."],
-  ["PROOF", "Finite-difference checks", "Analytical gradients are tested against numerical estimates before release."],
+  ["PROOF", "Numerical + framework parity", "Finite differences test local rules; a fixed float64 benchmark compares the complete pass with PyTorch."],
 ];
 
 function useReducedMotion(): boolean {
@@ -31,8 +33,8 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
-function createSession(dataset: DatasetId, width: number): TrainingSession {
-  return new TrainingSession(dataset, width, 2026);
+function createSession(dataset: DatasetId, width: number, batchSize = 4): TrainingSession {
+  return new TrainingSession(dataset, width, 2026, { batchSize });
 }
 
 function scrollToId(id: string): void {
@@ -42,7 +44,8 @@ function scrollToId(id: string): void {
 export default function App() {
   const [datasetId, setDatasetId] = useState<DatasetId>("xor");
   const [width, setWidth] = useState(8);
-  const [session, setSession] = useState(() => createSession("xor", 8));
+  const [batchSize, setBatchSize] = useState(4);
+  const [session, setSession] = useState(() => createSession("xor", 8, 4));
   const [snapshot, setSnapshot] = useState<TrainingSnapshot>(() => session.snapshot());
   const [history, setHistory] = useState<number[]>([]);
   const [isTraining, setIsTraining] = useState(false);
@@ -54,13 +57,13 @@ export default function App() {
   const description = useMemo(() => DATASETS.find((item) => item.id === datasetId)?.description ?? "", [datasetId]);
 
   useEffect(() => {
-    const next = createSession(datasetId, width);
+    const next = createSession(datasetId, width, batchSize);
     setSession(next);
     setSnapshot(next.snapshot());
     setHistory([]);
     setIsTraining(false);
     setActiveStep(-1);
-  }, [datasetId, width]);
+  }, [datasetId, width, batchSize]);
 
   useEffect(() => {
     if (!isTraining) return;
@@ -87,7 +90,7 @@ export default function App() {
   };
 
   const reset = () => {
-    const next = createSession(datasetId, width);
+    const next = createSession(datasetId, width, batchSize);
     setSession(next);
     setSnapshot(next.snapshot());
     setHistory([]);
@@ -102,7 +105,7 @@ export default function App() {
     <main className="site-shell">
       <header className="global-nav">
         <a className="brand" href="#top" aria-label="NeuroForge home"><span className="brand-mark" aria-hidden="true"><span /><span /><span /></span><span>NEURO<span>FORGE</span></span></a>
-        <nav aria-label="Primary navigation"><a href="#lab">Live lab</a><a href="#method">Method</a><a href="#engine">Engine</a></nav>
+        <nav aria-label="Primary navigation"><a href="#lab">Live lab</a><a href="#studies">Studies</a><a href="#method">Method</a><a href="#engine">Engine</a></nav>
         <button className="nav-action" onClick={() => scrollToId("lab")}><span aria-hidden="true">↘</span> Inspect live lab</button>
       </header>
 
@@ -112,7 +115,7 @@ export default function App() {
           <h1>Make every<br /><em>derivative</em> visible.</h1>
           <p className="hero-lede">NeuroForge is not another black box. It is a live field guide to the values, local rules, and gradient paths that make a neural network learn.</p>
           <div className="hero-actions"><button className="hero-primary" onClick={() => scrollToId("lab")}>Observe live training <span>↘</span></button><button className="hero-secondary" onClick={() => scrollToId("method")}>Inspect reverse method</button></div>
-          <dl className="hero-proof"><div><dt>15</dt><dd>differentiable operations</dd></div><div><dt>3</dt><dd>interactive learning studies</dd></div><div><dt>0</dt><dd>remote model calls</dd></div></dl>
+          <dl className="hero-proof"><div><dt>19</dt><dd>differentiable operations</dd></div><div><dt>5</dt><dd>extended local studies</dd></div><div><dt>0</dt><dd>remote model calls</dd></div></dl>
         </div>
         <HeroSignalMap />
         <div className="hero-index"><span>01</span><i /><span>Observe the consequence of every local rule.</span></div>
@@ -149,6 +152,8 @@ export default function App() {
         </div>
       </section>
 
+      <Suspense fallback={<section className="advanced-section" aria-label="Loading advanced studies"><p className="eyebrow">Preparing bounded local studies…</p></section>}><AdvancedLearningLab session={session} onBatchSize={setBatchSize} /></Suspense>
+
       <section className="method-section" id="method">
         <header className="section-intro"><div><p className="eyebrow">03 / from forward trace to proof</p><h2>Not a metaphor.<br /><em>A method.</em></h2></div><p>Autograd becomes useful when you can see the distinction between evaluating a graph and differentiating it. NeuroForge keeps both passes in view.</p></header>
         <div className="method-path"><article className="method-equation"><span>FORWARD PASS</span><strong>x → z → a → ŷ → L</strong><p>Evaluate each operation and remember the local context needed to differentiate it.</p></article><div className="method-vector"><span>01</span><i /><span>02</span><i /><span>03</span></div><article className="method-equation reverse-equation"><span>REVERSE PASS</span><strong>∂L/∂x ← ∂L/∂z ← 1</strong><p>Start at the scalar loss, follow the graph backward, and add every valid gradient contribution.</p></article></div>
@@ -158,7 +163,7 @@ export default function App() {
       <section className="engine-section" id="engine">
         <div className="engine-wash" aria-hidden="true" />
         <header className="section-intro engine-intro"><div><p className="eyebrow">04 / the engine room</p><h2>Small enough to<br /><em>inspect.</em> Real enough to learn from.</h2></div><p>NeuroForge is intentionally compact. The point is not to approximate a production framework; it is to make the essential mechanics legible, testable, and alive.</p></header>
-        <div className="spec-matrix"><div className="spec-row spec-heading"><span>Surface</span><span>What is actually implemented</span><span>Why it matters</span></div><div className="spec-row"><span>Tensor tape</span><span>Data, gradients, shape, parents, and backward rules</span><span>Every graph edge is traceable.</span></div><div className="spec-row"><span>Learning stack</span><span>Dense layers, activations, losses, sequential model, SGD + momentum</span><span>Enough structure to make learning behavior real.</span></div><div className="spec-row"><span>Verification</span><span>Finite differences, convergence tests, type checks, dependency audit</span><span>Math claims are backed by executable checks.</span></div></div>
+        <div className="spec-matrix"><div className="spec-row spec-heading"><span>Surface</span><span>What is actually implemented</span><span>Why it matters</span></div><div className="spec-row"><span>Tensor tape</span><span>Data, gradients, shape, parents, backward rules, Conv2D, and max pooling</span><span>Every graph edge is traceable, including receptive-field accumulation.</span></div><div className="spec-row"><span>Learning stack</span><span>Dense + convolutional layers, activations, losses, sequential model, SGD, momentum, and Adam</span><span>Enough structure to make real learning behavior comparable.</span></div><div className="spec-row"><span>Verification</span><span>Finite differences, convergence studies, float64 PyTorch parity, type checks, and dependency audit</span><span>Math claims are backed by executable checks and an independent comparison.</span></div></div>
       </section>
 
       <section className="closing-field"><p className="eyebrow">Next observation</p><h2>Every black box<br />starts as a graph.</h2><p>Open a study, trace one backward pass, then change the system and watch what the gradient does.</p><button className="hero-primary" onClick={() => scrollToId("lab")}>Return to live lab <span>↗</span></button></section>

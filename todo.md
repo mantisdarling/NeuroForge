@@ -4,10 +4,16 @@
 - [x] Correct any control, panel, graph-node, chart, or typography misalignment discovered in responsive captures.
 - [x] Preserve the Signal Observatory’s bespoke forward/reverse visual system; do not introduce generic dashboard styling.
 - [x] Re-run all application, security, and production-build checks after the visual refinements.
-- [ ] Import `mantisdarling/NeuroForge` into Vercel after the user completes Vercel authorization.
+- [x] Import `mantisdarling/NeuroForge` into Vercel after the user completes Vercel authorization.
 - [x] Confirm the Vercel import uses the repository’s `pnpm build` command and `dist` output directory.
 - [x] Expand NeuroForge from a compact playground into a fuller multi-section product experience without copying the reference site.
 - [x] Verify desktop and mobile composition scale, visual hierarchy, and alignment after the experience expansion.
 - [x] Add a first-visit guided learning track that teaches the Live Lab without obscuring its primary controls.
 - [x] Add responsive hover, loading, and reduced-motion-safe interaction feedback across the Live Lab.
 - [x] Verify the guided Live Lab flow on desktop and mobile before pushing the enhancement.
+- [x] Add bounded in-browser digit sketching, digit-model prediction, and training progress presentation.
+- [x] Add a weight-sensitivity control with observable activation, prediction, and loss changes.
+- [x] Add mini-batch controls and averaged-gradient explanation within the Live Lab.
+- [x] Implement and gradient-check convolution and pooling with a CNN shape-classification demonstration.
+- [x] Add SGD, momentum, and Adam comparison with verifiable numerical parity against PyTorch.
+- [x] Add the engine teaching section, update documentation, run full security/math/build checks, and confirm the live deployment.

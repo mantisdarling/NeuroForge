@@ -8,10 +8,10 @@ Automatic differentiation records how values depend on prior operations, then ap
 
 | Area | Included implementation |
 | --- | --- |
-| Core math | Elementwise add, subtract, multiply, divide, power, exponential, logarithm, sum, mean, transpose, matrix multiplication, ReLU, sigmoid, tanh, and stable softmax. |
+| Core math | Elementwise add, subtract, multiply, divide, power, exponential, logarithm, sum, mean, transpose, matrix multiplication, valid Conv2D, max pooling, ReLU, sigmoid, tanh, and stable softmax. |
 | Reverse mode | A topological graph traversal with local backward rules and accumulated gradients at shared parents. |
-| Neural network library | `Linear`, `Tanh`, `ReLU`, `Sigmoid`, `Sequential`, mean-squared error, cross-entropy, and SGD with momentum. |
-| Live playground | XOR, two-class spiral, and sine regression; hidden-width control; bounded browser-side training; loss trace; decision or regression field; computation-graph state. |
+| Neural network library | `Linear`, `Conv2D`, `MaxPool2D`, `Tanh`, `ReLU`, `Sigmoid`, `Sequential`, mean-squared error, cross-entropy, SGD, momentum, and Adam. |
+| Live playground | XOR, two-class spiral, sine regression, local digit sketching, weight sensitivity, mini-batches, CNN shapes, optimizer comparison, loss traces, and computation-graph state. |
 | Quality gates | Finite-difference gradient checks, deterministic convergence tests, strict TypeScript checks, production build, dependency audit, and credential-marker scan. |
 
 ## Explore the visualizer
@@ -25,6 +25,40 @@ The graph canvas is the primary observation surface. It shows the forward comput
 | XOR | Binary classification | Learns a nonlinear decision boundary. |
 | Spiral | Binary classification | Separates two interleaved radial classes. |
 | Sine | Regression | Approximates a sampled sine curve. |
+
+## Extended learning studies
+
+The extended studies are designed as **bounded, browser-local instruments**. They expose a concrete learning mechanism without accepting executable user input, sending drawings to a server, or performing runtime dataset downloads.
+
+| Study | What it does | Verification evidence |
+| --- | --- | --- |
+| Digit field | Trains a compact 196 → 24 → 10 network on 60 fixed, downsampled 14×14 samples selected from the public MNIST training data. A pointer-capable canvas projects a local sketch into the same 14×14 representation and reports all ten probabilities. | `DigitLabSession` test confirms loss reduction and greater than 55% subset accuracy after 42 bounded epochs. |
+| Sensitivity field | Temporarily perturbs the first visible input weight, evaluates the current model, and restores the exact parameter before returning the loss change. | Probe state is non-persistent; it reads the live model but does not call an optimizer. |
+| Mini-batch lens | Lets the learner choose batch sizes of 1, 2, 4, or 8. The training session rotates through real examples and reports the sampled parameter-gradient evidence before the averaged update. | Existing convergence suite continues to pass under default full-batch conditions. |
+| CNN shapes | Runs valid 3×3 Conv2D, ReLU, 2×2 max pooling, flattening, and a dense classifier on a deterministic circle/square/triangle study. | Conv2D finite-difference check and max-pool routing test pass; the bounded shape study exceeds 80% training accuracy. |
+| Optimizer evidence | Replays XOR from identical initial parameters with plain SGD, momentum, and Adam, then overlays the three local loss traces. | Each trace is finite and has the requested deterministic step count. |
+
+The MNIST helper script selects six examples per digit from the public 60,000-image training split, averages each 2×2 cell to produce a local 14×14 grayscale fixture, and encodes it in `client/src/engine/mnistMini.ts`. The app therefore makes **no dataset request at runtime**. The source catalog documents the original images as 28×28 grayscale pixels with ten labels.[4]
+
+## PyTorch parity benchmark
+
+The repository includes an independent CPU PyTorch benchmark for a fixed two-layer float64 network. `scripts/export_engine_parity.mjs` evaluates the same custom-engine forward and backward pass, while `scripts/verify_pytorch.py` builds the equivalent PyTorch tensors with the same inputs, parameters, targets, and loss. The generated `verification/pytorch-parity.json` is the source of the site’s evidence panel.
+
+| Measured field | Actual result |
+| --- | --- |
+| Framework | PyTorch 2.13.0+cpu |
+| Precision | float64 |
+| Maximum absolute difference | `5.551115123125783e-17` |
+| Largest output difference | `1.3877787807814457e-17` |
+| Largest gradient difference | `5.551115123125783e-17` |
+| Result | Pass, below the benchmark threshold of `1e-10` |
+
+Reproduce the comparison after installing CPU PyTorch with:
+
+```bash
+pnpm dlx tsx scripts/export_engine_parity.mjs
+python3 scripts/verify_pytorch.py
+```
 
 ## How reverse-mode autograd works
 
@@ -48,12 +82,12 @@ Gradient checking compares a derivative produced by reverse mode with a central 
 f′(x) ≈ (f(x + ε) − f(x − ε)) / (2ε)
 ```
 
-This repository checks a composed scalar expression, matrix multiplication followed by `tanh`, and a softmax-log loss. The convergence suite also verifies that XOR reaches full training accuracy and sine regression drives loss below the defined acceptance threshold.
+This repository checks a composed scalar expression, matrix multiplication followed by `tanh`, a softmax-log loss, Conv2D kernel gradients, and max-pool gradient routing. The convergence suite also verifies XOR, sine regression, the bounded digit study, the CNN shape study, and matched optimizer traces.
 
 | Command | Result from the final local verification |
 | --- | --- |
 | `pnpm check` | Passed with strict TypeScript checking. |
-| `pnpm test` | Passed: 5 tests across 2 test files. The three finite-difference gradient checks and two deterministic training tests passed. |
+| `pnpm test` | Passed: 10 tests across 4 test files, including Conv2D finite differences, max-pool routing, digit-study loss reduction, CNN shape learning, and optimizer-trace checks. |
 | Browser XOR run | 320 epochs; loss decreased from `0.70864` to `0.00058`; accuracy reached `100%`. |
 | `pnpm security:scan` | Passed; no credential markers were found in 15 scanned files. |
 | `pnpm build` | Passed; production Vite bundle produced successfully. |
@@ -74,11 +108,15 @@ pnpm audit
 
 ```text
 client/src/engine/tensor.ts      Reverse-mode tensor and differentiable operations
-client/src/engine/nn.ts          Layers, losses, seeded initialization, and SGD
-client/src/engine/training.ts    Deterministic toy datasets and local training session
-client/src/components/           SVG graph, loss trace, and model-field views
+client/src/engine/nn.ts          Dense/convolutional layers, losses, seeded initialization, SGD, and Adam
+client/src/engine/training.ts    Deterministic toy datasets, mini-batch session, and sensitivity probe
+client/src/engine/advanced.ts    Digit, CNN-shape, and optimizer-comparison learning studies
+client/src/engine/mnistMini.ts   Browser-local selected MNIST fixture; generated once, never fetched at runtime
+client/src/components/           SVG graph, guided track, field views, and advanced learning studio
 tests/                           Gradient checks and convergence tests
-scripts/scan-secrets.mjs         Narrow credential-marker scan
+scripts/prepare_mnist_subset.py  Deterministic MNIST fixture preparation
+scripts/export_engine_parity.mjs Custom-engine parity export
+scripts/verify_pytorch.py        Independent CPU PyTorch comparison
 .github/workflows/ci.yml         Push and pull-request verification gates
 vercel.json                      Static-hosting security headers
 ```
@@ -106,3 +144,5 @@ The repository is prepared for static deployment on Vercel. Import `mantisdarlin
 [2] [Auto-eD, “Module 3: The Reverse Mode of Automatic Differentiation.”](https://auto-ed.readthedocs.io/en/latest/mod3.html)
 
 [3] [Dive into Deep Learning, “Automatic Differentiation.”](https://d2l.ai/chapter_preliminaries/autograd.html)
+
+[4] [TensorFlow Datasets, “MNIST.”](https://www.tensorflow.org/datasets/catalog/mnist)

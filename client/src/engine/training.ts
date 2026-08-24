@@ -1,4 +1,4 @@
-import { Linear, SGD, Sequential, Tanh, createRandom, crossEntropy, meanSquaredError } from "./nn";
+import { Adam, Linear, SGD, Sequential, Tanh, createRandom, crossEntropy, meanSquaredError } from "./nn";
 import { Tensor } from "./tensor";
 
 export type DatasetId = "xor" | "spiral" | "sine";
@@ -71,15 +71,26 @@ export interface TrainingSnapshot {
   gradientMagnitude: number;
 }
 
+export type OptimizerName = "sgd" | "momentum" | "adam";
+type StepOptimizer = { zeroGrad(): void; step(): void };
+
+export interface TrainingOptions {
+  optimizer?: OptimizerName;
+  batchSize?: number;
+}
+
 export class TrainingSession {
   readonly dataset: Dataset;
   readonly model: Sequential;
-  readonly optimizer: SGD;
+  readonly optimizer: StepOptimizer;
   epoch = 0;
   history: number[] = [];
+  batchSize: number;
+  batchCursor = 0;
+  lastBatchGradient: number[] = [];
   private latest: TrainingSnapshot;
 
-  constructor(datasetId: DatasetId, width = 8, seed = 2026) {
+  constructor(datasetId: DatasetId, width = 8, seed = 2026, options: TrainingOptions = {}) {
     this.dataset = getDataset(datasetId);
     const random = createRandom(seed);
     const outputActivation = this.dataset.task === "classification" ? [new Linear(width, this.dataset.outputFeatures, random, "output")] : [new Linear(width, 1, random, "output")];
@@ -91,16 +102,30 @@ export class TrainingSession {
       ...outputActivation,
     ]);
     const learningRate = datasetId === "sine" ? 0.08 : datasetId === "spiral" ? 0.28 : 0.35;
-    this.optimizer = new SGD(this.model.parameters(), learningRate, 0.82);
+    this.batchSize = Math.min(Math.max(1, options.batchSize ?? this.dataset.inputs.length), this.dataset.inputs.length);
+    const optimizer = options.optimizer ?? "momentum";
+    this.optimizer = optimizer === "adam" ? new Adam(this.model.parameters(), datasetId === "sine" ? 0.015 : 0.035) : new SGD(this.model.parameters(), learningRate, optimizer === "momentum" ? 0.82 : 0);
     this.latest = this.evaluate();
   }
 
-  private inputTensor(): Tensor {
-    return Tensor.from(flatten(this.dataset.inputs), [this.dataset.inputs.length, this.dataset.inputFeatures]);
+  setBatchSize(size: number): void {
+    this.batchSize = Math.min(Math.max(1, Math.round(size)), this.dataset.inputs.length);
+    this.batchCursor = 0;
   }
 
-  private targetTensor(): Tensor {
-    return Tensor.from(flatten(this.dataset.targets), [this.dataset.targets.length, this.dataset.outputFeatures]);
+  private batchIndices(): number[] {
+    const count = this.dataset.inputs.length;
+    const indices = Array.from({ length: this.batchSize }, (_, offset) => (this.batchCursor + offset) % count);
+    this.batchCursor = (this.batchCursor + this.batchSize) % count;
+    return indices;
+  }
+
+  private inputTensor(indices = this.dataset.inputs.map((_value, index) => index)): Tensor {
+    return Tensor.from(flatten(indices.map((index) => this.dataset.inputs[index])), [indices.length, this.dataset.inputFeatures]);
+  }
+
+  private targetTensor(indices = this.dataset.targets.map((_value, index) => index)): Tensor {
+    return Tensor.from(flatten(indices.map((index) => this.dataset.targets[index])), [indices.length, this.dataset.outputFeatures]);
   }
 
   private score(output: number[]): number | undefined {
@@ -125,11 +150,13 @@ export class TrainingSession {
 
   trainOne(): TrainingSnapshot {
     this.optimizer.zeroGrad();
-    const prediction = this.model.forward(this.inputTensor());
-    const loss = this.dataset.task === "classification" ? crossEntropy(prediction, this.targetTensor()) : meanSquaredError(prediction, this.targetTensor());
+    const indices = this.batchIndices();
+    const prediction = this.model.forward(this.inputTensor(indices));
+    const loss = this.dataset.task === "classification" ? crossEntropy(prediction, this.targetTensor(indices)) : meanSquaredError(prediction, this.targetTensor(indices));
     loss.backward();
     const gradients = this.model.parameters().flatMap((parameter) => parameter.grad);
     const gradientMagnitude = Math.sqrt(gradients.reduce((sum, gradient) => sum + gradient * gradient, 0) / gradients.length);
+    this.lastBatchGradient = gradients.slice(0, Math.min(8, gradients.length));
     this.optimizer.step();
     this.epoch += 1;
     this.latest = { ...this.evaluate(), gradientMagnitude };
@@ -152,5 +179,14 @@ export class TrainingSession {
       return this.dataset.task === "classification" ? output.softmax().toArray() : output.toArray();
     });
   }
-}
 
+  previewPerturbation(parameterIndex: number, delta: number): { before: TrainingSnapshot; after: TrainingSnapshot; parameter: string } {
+    const parameters = this.model.parameters();
+    const parameter = parameters[Math.min(Math.max(0, parameterIndex), parameters.length - 1)];
+    const before = this.evaluate();
+    parameter.data[0] += delta;
+    const after = this.evaluate();
+    parameter.data[0] -= delta;
+    return { before, after, parameter: parameter.label ?? `parameter-${parameterIndex}` };
+  }
+}
