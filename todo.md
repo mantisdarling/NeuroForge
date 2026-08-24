@@ -35,3 +35,4 @@
 - [x] Rewrite README.md into a professional, accurate overview of the project, features, architecture, verification, security, and workflow.
 - [x] Validate the rewritten documentation, push it under Mantis Darling, and confirm the repository release.
 - [x] Add and validate a professional README placeholder for screenshots or a demo GIF, then push the documentation update.
+- [x] Remove the README screenshot or demo-GIF placeholder, validate the revert, and push the documentation update.
