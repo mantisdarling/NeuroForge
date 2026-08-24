@@ -1,5 +1,5 @@
 /** Signal Observatory: a large-scale, asymmetric learning instrument with an expansive hero, a full live lab, and a technical story from trace to proof. */
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { AmbientField } from "./components/AmbientField";
 import { DecisionField } from "./components/DecisionField";
 import { GuidedTrack } from "./components/GuidedTrack";
@@ -61,6 +61,8 @@ export default function App() {
   const [activeStep, setActiveStep] = useState(-1);
   const [guideStep, setGuideStep] = useState<number | null>(0);
   const [highContrast, setHighContrast] = useState(initialHighContrast);
+  const [advancedReady, setAdvancedReady] = useState(false);
+  const advancedBoundaryRef = useRef<HTMLElement>(null);
   const reducedMotion = useReducedMotion();
 
   const dataset = session.dataset;
@@ -82,6 +84,24 @@ export default function App() {
       // The visual preference remains optional when browser storage is unavailable.
     }
   }, [highContrast]);
+
+  useEffect(() => {
+    const boundary = advancedBoundaryRef.current;
+    if (!boundary) return;
+    const reveal = () => setAdvancedReady(true);
+    if (window.location.hash === "#studies" || !("IntersectionObserver" in window)) {
+      reveal();
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        reveal();
+        observer.disconnect();
+      }
+    }, { rootMargin: "900px 0px" });
+    observer.observe(boundary);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!isTraining) return;
@@ -171,7 +191,9 @@ export default function App() {
         </div>
       </section>
 
-      <Suspense fallback={<section className="advanced-section" aria-label="Loading advanced studies"><p className="eyebrow">Preparing bounded local studies…</p></section>}><AdvancedLearningLab session={session} onBatchSize={setBatchSize} /></Suspense>
+      <section ref={advancedBoundaryRef} className="advanced-boundary" id="studies" aria-label="Advanced studies" aria-busy={!advancedReady}>
+        {advancedReady && <Suspense fallback={<div className="advanced-section" aria-label="Loading advanced studies"><p className="eyebrow">Preparing bounded local studies…</p></div>}><AdvancedLearningLab session={session} onBatchSize={setBatchSize} /></Suspense>}
+      </section>
 
       <section className="method-section" id="method">
         <header className="section-intro"><div><p className="eyebrow">03 / from forward trace to proof</p><h2>Not a metaphor.<br /><em>A method.</em></h2></div><p>Autograd becomes useful when you can see the distinction between evaluating a graph and differentiating it. NeuroForge keeps both passes in view.</p></header>

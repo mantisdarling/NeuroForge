@@ -20,6 +20,8 @@ export function AdvancedLearningLab({ session, onBatchSize }: AdvancedLearningLa
   const [perturbation, setPerturbation] = useState(0);
   const [batchSize, setBatchSize] = useState(session.batchSize);
   const [traces, setTraces] = useState<OptimizerTrace[]>([]);
+  const [isCnnTraining, setIsCnnTraining] = useState(false);
+  const [isComparingOptimizers, setIsComparingOptimizers] = useState(false);
   const [cnn] = useState(() => new ShapeCnnSession());
   const [cnnStudy, setCnnStudy] = useState<StudySnapshot>(() => cnn.snapshot());
 
@@ -76,9 +78,25 @@ export function AdvancedLearningLab({ session, onBatchSize }: AdvancedLearningLa
     window.setTimeout(() => { setDigitStudy(digitSession.train(42)); setIsDigitTraining(false); }, 10);
   };
 
+  const trainCnn = () => {
+    setIsCnnTraining(true);
+    window.setTimeout(() => {
+      setCnnStudy(cnn.train(45));
+      setIsCnnTraining(false);
+    }, 10);
+  };
+
+  const runOptimizerComparison = () => {
+    setIsComparingOptimizers(true);
+    window.setTimeout(() => {
+      setTraces(compareOptimizers("xor", 8, 56));
+      setIsComparingOptimizers(false);
+    }, 10);
+  };
+
   const bestDigit = digitScores.reduce((best, value, index) => value > digitScores[best] ? index : best, 0);
   return (
-    <section className="advanced-section" id="studies">
+    <div className="advanced-section">
       <header className="section-intro advanced-intro"><div><p className="eyebrow">03 / extended studies</p><h2>Change the graph.<br /><em>Watch the consequence.</em></h2></div><p>Every study stays inside the browser. These are small, bounded experiments designed to make learning mechanics visible, not to hide them behind a service.</p></header>
       <div className="study-index" aria-label="Advanced study index"><span>DIGIT FIELD</span><i /><span>SENSITIVITY</span><i /><span>MINI-BATCH</span><i /><span>CNN</span><i /><span>OPTIMIZERS</span></div>
 
@@ -95,13 +113,13 @@ export function AdvancedLearningLab({ session, onBatchSize }: AdvancedLearningLa
 
       <div className="study-grid batch-study"><article className="study-copy"><p className="eyebrow">Study 03 / mini-batch lens</p><h3>Many examples.<br />One <em>update.</em></h3><p>Choose how many examples contribute to the next Live Lab update. Their individual gradients are represented here before the average reaches the parameter.</p><div className="batch-switches">{[1, 2, 4, 8].map((size) => <button key={size} className={batchSize === size ? "is-selected" : ""} onClick={() => { setBatchSize(size); onBatchSize(size); }}>{size}</button>)}</div></article><div className="batch-surface"><div className="surface-heading"><span>EXAMPLE GRADIENTS → MEAN UPDATE</span><span>{batchSize} / batch</span></div><div className="gradient-stream">{gradientBars.map((gradient, index) => <div key={`${index}-${gradient}`} className="gradient-particle" style={{ "--height": `${Math.max(11, Math.min(100, Math.abs(gradient) * 7200))}%`, "--delay": `${index * 55}ms` } as React.CSSProperties}><span>g{index + 1}</span><i /></div>)}<div className="gradient-mean"><span>Σg / n</span><b>{fmt(session.snapshot().gradientMagnitude)}</b></div></div></div></div>
 
-      <div className="study-grid cnn-study"><article className="study-copy"><p className="eyebrow">Study 04 / convolution field</p><h3>Slide a kernel.<br />Keep the <em>evidence.</em></h3><p>A valid 3×3 Conv2D layer, ReLU, 2×2 max pooling, flattening, and dense classifier learn three generated geometric classes. The convolution backward pass is covered by finite differences.</p><button className="primary-action" onClick={() => setCnnStudy(cnn.train(45))}>Train 45 CNN epochs</button></article><div className="cnn-surface"><div className="surface-heading"><span>6 × 6 SHAPES → 3 × 3 KERNELS</span><span className="teal">VALID CONV</span></div><div className="shape-strip">{ShapeCnnSession.names().map((shape, index) => <div key={shape} className={`shape-token shape-${index}`}><i /><span>{shape}</span></div>)}</div><div className="cnn-metrics"><div><small>epoch</small><b>{cnnStudy.epoch}</b></div><div><small>loss</small><b className="amber">{fmt(cnnStudy.loss)}</b></div><div><small>accuracy</small><b className="teal">{Math.round(cnnStudy.accuracy * 100)}%</b></div></div></div></div>
+      <div className="study-grid cnn-study"><article className="study-copy"><p className="eyebrow">Study 04 / convolution field</p><h3>Slide a kernel.<br />Keep the <em>evidence.</em></h3><p>A valid 3×3 Conv2D layer, ReLU, 2×2 max pooling, flattening, and dense classifier learn three generated geometric classes. The convolution backward pass is covered by finite differences.</p><button className={isCnnTraining ? "primary-action is-loading" : "primary-action"} onClick={trainCnn} disabled={isCnnTraining}>{isCnnTraining ? "Tracing convolution loss…" : "Train 45 CNN epochs"}</button></article><div className="cnn-surface"><div className="surface-heading"><span>6 × 6 SHAPES → 3 × 3 KERNELS</span><span className="teal">VALID CONV</span></div><div className="shape-strip">{ShapeCnnSession.names().map((shape, index) => <div key={shape} className={`shape-token shape-${index}`}><i /><span>{shape}</span></div>)}</div><div className="cnn-metrics"><div><small>epoch</small><b>{cnnStudy.epoch}</b></div><div><small>loss</small><b className="amber">{fmt(cnnStudy.loss)}</b></div><div><small>accuracy</small><b className="teal">{Math.round(cnnStudy.accuracy * 100)}%</b></div></div></div></div>
 
-      <div className="study-grid optimizer-study"><article className="study-copy"><p className="eyebrow">Study 05 / optimizer evidence</p><h3>Same start.<br />Different <em>trajectory.</em></h3><p>SGD, momentum, and Adam start from an identical seed on the XOR task. Their loss traces are calculated locally and overlaid here.</p><button className="secondary-action" onClick={() => setTraces(compareOptimizers("xor", 8, 56))}>Run 56 matched steps</button></article><div className="optimizer-surface"><div className="surface-heading"><span>LOSS TRACE / IDENTICAL INITIALIZATION</span><span>56 steps</span></div>{traces.length ? <svg className="optimizer-svg" viewBox="0 0 560 190" role="img" aria-label="Optimizer loss comparison">{traces.map((trace, index) => { const max = Math.max(...traces.flatMap((candidate) => candidate.history)); const points = trace.history.map((loss, step) => `${20 + step * 9.2},${170 - (loss / max) * 132}`).join(" "); return <g key={trace.name}><polyline points={points} className={`optimizer-line line-${index}`} /><text x={425} y={32 + index * 22} className={`optimizer-label line-${index}`}>{trace.name.toUpperCase()} {fmt(trace.finalLoss)}</text></g>; })}</svg> : <div className="optimizer-empty">Run the matched study to reveal three real trajectories.</div>}</div></div>
+      <div className="study-grid optimizer-study"><article className="study-copy"><p className="eyebrow">Study 05 / optimizer evidence</p><h3>Same start.<br />Different <em>trajectory.</em></h3><p>SGD, momentum, and Adam start from an identical seed on the XOR task. Their loss traces are calculated locally and overlaid here.</p><button className={isComparingOptimizers ? "secondary-action is-loading" : "secondary-action"} onClick={runOptimizerComparison} disabled={isComparingOptimizers}>{isComparingOptimizers ? "Comparing local traces…" : "Run 56 matched steps"}</button></article><div className="optimizer-surface"><div className="surface-heading"><span>LOSS TRACE / IDENTICAL INITIALIZATION</span><span>56 steps</span></div>{traces.length ? <svg className="optimizer-svg" viewBox="0 0 560 190" role="img" aria-label="Optimizer loss comparison">{traces.map((trace, index) => { const max = Math.max(...traces.flatMap((candidate) => candidate.history)); const points = trace.history.map((loss, step) => `${20 + step * 9.2},${170 - (loss / max) * 132}`).join(" "); return <g key={trace.name}><polyline points={points} className={`optimizer-line line-${index}`} /><text x={425} y={32 + index * 22} className={`optimizer-label line-${index}`}>{trace.name.toUpperCase()} {fmt(trace.finalLoss)}</text></g>; })}</svg> : <div className="optimizer-empty">Run the matched study to reveal three real trajectories.</div>}</div></div>
 
       <section className="parity-panel"><div><p className="eyebrow">Independent parity benchmark</p><h3>Verified against<br /><em>{PYTORCH_PARITY.framework}.</em></h3><p>A fixed two-layer float64 network uses identical inputs, parameters, targets, forward operations, and reverse gradients in both implementations.</p></div><dl><div><dt>{PYTORCH_PARITY.max_abs_difference.toExponential(2)}</dt><dd>maximum absolute difference</dd></div><div><dt>{PYTORCH_PARITY.dtype}</dt><dd>comparison precision</dd></div><div><dt>{PYTORCH_PARITY.status.toUpperCase()}</dt><dd>parity status</dd></div></dl></section>
 
       <section className="how-section" id="how"><p className="eyebrow">How this works / illustrated by the live graph above</p><div><h3>Automatic differentiation records local rules during the forward pass, then applies the chain rule in reverse.</h3><p>Each Tensor keeps its parents and a small backward rule. Starting with a scalar loss gradient of one, the engine visits graph nodes in reverse topological order and adds every contribution to each parent gradient. Conv2D follows the same contract: it records where every receptive field touched the input and kernel, then accumulates those local derivatives during the backward pass.</p></div></section>
-    </section>
+    </div>
   );
 }

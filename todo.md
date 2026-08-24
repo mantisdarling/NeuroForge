@@ -26,3 +26,6 @@
 - [x] Persist the user’s contrast preference and verify its contrast, mobile layout, keyboard behavior, production build, and live deployment.
 - [x] Elevate the dark ambient field with layered depth and restrained premium motion without changing the existing color system.
 - [x] Verify background readability, desktop and mobile composition, reduced-motion behavior, production build, and live deployment.
+- [x] Audit the static delivery path and identify resource-loading, runtime, and monitoring requirements for approximately 1,000 users.
+- [x] Add lightweight delivery and client-runtime safeguards that preserve the browser-local learning experience under increased traffic.
+- [x] Verify the scale-readiness update with production build, automated tests, security checks, and live deployment inspection.

@@ -26,4 +26,5 @@ jobs:
       - run: pnpm check
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm delivery:check
       - run: pnpm audit --prod --audit-level=high

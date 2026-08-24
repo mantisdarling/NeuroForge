@@ -91,6 +91,7 @@ This repository checks a composed scalar expression, matrix multiplication follo
 | Browser XOR run | 320 epochs; loss decreased from `0.70864` to `0.00058`; accuracy reached `100%`. |
 | `pnpm security:scan` | Passed; no credential markers were found in 15 scanned files. |
 | `pnpm build` | Passed; production Vite bundle produced successfully. |
+| `pnpm delivery:check` | Enforces gzip budgets for emitted JavaScript and CSS assets. |
 | `pnpm audit` | Passed; no known dependency vulnerabilities reported. |
 
 Run the suite yourself with:
@@ -101,8 +102,22 @@ pnpm check
 pnpm test
 pnpm security:scan
 pnpm build
+pnpm delivery:check
 pnpm audit
 ```
+
+## Scale readiness
+
+NeuroForge is a **static, client-only experience**. Every visitor receives cacheable build assets, while training, sketching, graph updates, and bounded experiments execute inside that visitor’s browser. The site therefore has no shared application runtime, model queue, database, or per-request compute path to contend across users.
+
+| Scale control | Current implementation | Operational effect |
+| --- | --- | --- |
+| Static asset caching | Fingerprinted production assets are configured for one-year immutable caching. | Repeat visits and releases reuse unchanged client assets instead of re-running application work on an origin. |
+| Initial-load deferral | The advanced-study module loads only when the visitor approaches the Studies section or opens its anchor directly. | The hero and Live Lab avoid downloading or initializing the heaviest local study code on first view. |
+| Bounded local compute | Digit, CNN, and optimizer demonstrations have fixed dataset sizes and step counts; their actions immediately expose progress and disable duplicate runs. | One visitor’s experiments remain isolated from every other visitor and do not create a shared server workload. |
+| Delivery budget gate | `pnpm delivery:check` runs after each production build and is enforced in continuous integration. | JavaScript or stylesheet growth that crosses the gzip budget fails before release. |
+
+This makes the application appropriate for a **target of approximately 1,000 users** when the selected hosting account has adequate static bandwidth and request allowance. Actual availability still depends on the hosting provider, DNS, browser/device capability, and traffic pattern; this repository does not claim to replace provider-level capacity monitoring or DDoS protection. Review provider analytics and quota settings before a public launch, then monitor them during the first release window.
 
 ## Project structure
 
@@ -135,7 +150,7 @@ The repository applies a small set of defense-in-depth controls. Vercel configur
 
 ## Deployment
 
-The repository is prepared for static deployment on Vercel. Import `mantisdarling/NeuroForge`, retain the default build command `pnpm build`, and publish the generated `dist` directory. The included `vercel.json` applies the browser-facing security headers at deployment time.
+The repository is prepared for static deployment on Vercel. Import `mantisdarling/NeuroForge`, retain the default build command `pnpm build`, and publish the generated `dist` directory. The included `vercel.json` applies the browser-facing security headers and immutable cache policy for fingerprinted build assets at deployment time.
 
 ## References
 

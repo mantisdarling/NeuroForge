@@ -7,11 +7,17 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
-    sourcemap: true,
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom"],
+        },
+      },
+    },
   },
   test: {
     environment: "node",
     include: ["../tests/**/*.test.ts"],
   },
 });
-

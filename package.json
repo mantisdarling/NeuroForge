@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "security:scan": "node scripts/scan-secrets.mjs",
-    "audit": "pnpm audit --prod --audit-level=high"
+    "audit": "pnpm audit --prod --audit-level=high",
+    "delivery:check": "node scripts/check-delivery-budget.mjs"
   },
   "dependencies": {
     "react": "^19.1.1",
@@ -28,4 +29,3 @@
   },
   "packageManager": "pnpm@10.15.1"
 }
-
