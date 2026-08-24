@@ -1,6 +1,7 @@
 /** Signal Observatory: a large-scale, asymmetric learning instrument with an expansive hero, a full live lab, and a technical story from trace to proof. */
 import { useEffect, useMemo, useState } from "react";
 import { DecisionField } from "./components/DecisionField";
+import { GuidedTrack } from "./components/GuidedTrack";
 import { GraphCanvas } from "./components/GraphCanvas";
 import { HeroSignalMap } from "./components/HeroSignalMap";
 import { LossTrace } from "./components/LossTrace";
@@ -46,6 +47,7 @@ export default function App() {
   const [history, setHistory] = useState<number[]>([]);
   const [isTraining, setIsTraining] = useState(false);
   const [activeStep, setActiveStep] = useState(-1);
+  const [guideStep, setGuideStep] = useState<number | null>(0);
   const reducedMotion = useReducedMotion();
 
   const dataset = session.dataset;
@@ -81,6 +83,7 @@ export default function App() {
     setSnapshot(next);
     setHistory([...session.history]);
     setActiveStep((value) => (value + 1) % 7);
+    setGuideStep((value) => value === 2 ? null : value);
   };
 
   const reset = () => {
@@ -90,14 +93,17 @@ export default function App() {
     setHistory([]);
     setIsTraining(false);
     setActiveStep(-1);
+    setGuideStep(0);
   };
+
+  const advanceGuide = () => setGuideStep((value) => value === null || value >= 2 ? null : value + 1);
 
   return (
     <main className="site-shell">
       <header className="global-nav">
         <a className="brand" href="#top" aria-label="NeuroForge home"><span className="brand-mark" aria-hidden="true"><span /><span /><span /></span><span>NEURO<span>FORGE</span></span></a>
         <nav aria-label="Primary navigation"><a href="#lab">Live lab</a><a href="#method">Method</a><a href="#engine">Engine</a></nav>
-        <button className="nav-action" onClick={() => scrollToId("lab")}><span aria-hidden="true">↘</span> Open the lab</button>
+        <button className="nav-action" onClick={() => scrollToId("lab")}><span aria-hidden="true">↘</span> Inspect live lab</button>
       </header>
 
       <section className="hero-field" id="top">
@@ -105,7 +111,7 @@ export default function App() {
           <p className="eyebrow"><span className="mini-flow" aria-hidden="true" /> A learning instrument for reverse mode</p>
           <h1>Make every<br /><em>derivative</em> visible.</h1>
           <p className="hero-lede">NeuroForge is not another black box. It is a live field guide to the values, local rules, and gradient paths that make a neural network learn.</p>
-          <div className="hero-actions"><button className="hero-primary" onClick={() => scrollToId("lab")}>Enter live lab <span>↘</span></button><button className="hero-secondary" onClick={() => scrollToId("method")}>Read the method</button></div>
+          <div className="hero-actions"><button className="hero-primary" onClick={() => scrollToId("lab")}>Observe live training <span>↘</span></button><button className="hero-secondary" onClick={() => scrollToId("method")}>Inspect reverse method</button></div>
           <dl className="hero-proof"><div><dt>15</dt><dd>differentiable operations</dd></div><div><dt>3</dt><dd>interactive learning studies</dd></div><div><dt>0</dt><dd>remote model calls</dd></div></dl>
         </div>
         <HeroSignalMap />
@@ -122,12 +128,15 @@ export default function App() {
           <div><p className="eyebrow">02 / operational field</p><h2>Open the training<br />process <em>wide.</em></h2></div>
           <p>This is the live instrument. Select a study, alter the hidden width, and watch a genuine TypeScript reverse pass shape predictions in the browser.</p>
         </header>
-        <div className="lab-frame">
+        <div className="lab-guide-wrap">
+          <GuidedTrack step={guideStep} onAdvance={advanceGuide} onDismiss={() => setGuideStep(null)} onRestart={() => setGuideStep(0)} />
+        </div>
+        <div className={guideStep === 0 ? "lab-frame guide-controls-active" : guideStep === 1 ? "lab-frame guide-run-active" : guideStep === 2 ? "lab-frame guide-graph-active" : "lab-frame"}>
           <aside className="operations-rail" aria-label="Training controls">
             <div className="rail-heading"><span className="rail-index">LAB 02</span><p>Session controls</p></div>
-            <fieldset className="control-group"><legend>Choose a learning study</legend><div className="dataset-list">{DATASETS.map((item) => <button key={item.id} className={datasetId === item.id ? "dataset-option selected" : "dataset-option"} onClick={() => setDatasetId(item.id)} disabled={isTraining}><span className="dataset-marker">{item.marker}</span><span><strong>{item.title}</strong><small>{item.description}</small></span></button>)}</div></fieldset>
+            <fieldset className="control-group"><legend>Choose a learning study</legend><div className="dataset-list">{DATASETS.map((item) => <button key={item.id} className={datasetId === item.id ? "dataset-option selected" : "dataset-option"} onClick={() => { setDatasetId(item.id); if (guideStep === 0) setGuideStep(1); }} disabled={isTraining}><span className="dataset-marker">{item.marker}</span><span><strong>{item.title}</strong><small>{item.description}</small></span></button>)}</div></fieldset>
             <fieldset className="control-group"><legend>Hidden width <output>{width}</output></legend><input aria-label="Hidden layer width" type="range" min="4" max="16" step="2" value={width} onChange={(event) => setWidth(Number(event.target.value))} disabled={isTraining} /><div className="range-notes"><span>4 units</span><span>16 units</span></div></fieldset>
-            <div className="action-stack"><button className="primary-action" onClick={() => setIsTraining(true)} disabled={isTraining}>{isTraining ? "Tracing parameters…" : "Observe 320 epochs"}</button><button className="secondary-action" onClick={step} disabled={isTraining}>Trace next backward pass</button><button className="text-action" onClick={reset} disabled={isTraining}>Reset observed state</button></div>
+            <div className="action-stack"><button className={isTraining ? "primary-action is-loading" : "primary-action"} onClick={() => { setIsTraining(true); if (guideStep === 1) setGuideStep(2); }} disabled={isTraining}>{isTraining ? "Tracing parameters…" : "Observe 320 epochs"}</button><button className="secondary-action" onClick={step} disabled={isTraining}>Trace next backward pass</button><button className="text-action" onClick={reset} disabled={isTraining}>Reset observed state</button></div>
             <p className="rail-footnote"><i /> {description}<br />Runs entirely in your browser.</p>
           </aside>
 
