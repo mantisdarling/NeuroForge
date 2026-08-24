@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "security:scan": "node scripts/scan-secrets.mjs",
+    "security:config": "node scripts/check-security-config.mjs",
     "audit": "pnpm audit --prod --audit-level=high",
     "delivery:check": "node scripts/check-delivery-budget.mjs"
   },

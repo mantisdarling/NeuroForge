@@ -29,3 +29,6 @@
 - [x] Audit the static delivery path and identify resource-loading, runtime, and monitoring requirements for approximately 1,000 users.
 - [x] Add lightweight delivery and client-runtime safeguards that preserve the browser-local learning experience under increased traffic.
 - [x] Verify the scale-readiness update with production build, automated tests, security checks, and live deployment inspection.
+- [x] Inventory the repository, browser runtime, and live deployment boundaries for the defensive audit.
+- [x] Run non-invasive source, dependency, configuration, header, and browser-boundary security checks.
+- [ ] Remediate verified issues, re-run deterministic release gates, and verify the hardened production deployment.

@@ -90,6 +90,7 @@ This repository checks a composed scalar expression, matrix multiplication follo
 | `pnpm test` | Passed: 10 tests across 4 test files, including Conv2D finite differences, max-pool routing, digit-study loss reduction, CNN shape learning, and optimizer-trace checks. |
 | Browser XOR run | 320 epochs; loss decreased from `0.70864` to `0.00058`; accuracy reached `100%`. |
 | `pnpm security:scan` | Passed; no credential markers were found in 15 scanned files. |
+| `pnpm security:config` | Verifies required browser headers, CSP directives, and immutable CI action references. |
 | `pnpm build` | Passed; production Vite bundle produced successfully. |
 | `pnpm delivery:check` | Enforces gzip budgets for emitted JavaScript and CSS assets. |
 | `pnpm audit` | Passed; no known dependency vulnerabilities reported. |
@@ -101,6 +102,7 @@ pnpm install --frozen-lockfile
 pnpm check
 pnpm test
 pnpm security:scan
+pnpm security:config
 pnpm build
 pnpm delivery:check
 pnpm audit
@@ -140,13 +142,14 @@ vercel.json                      Static-hosting security headers
 
 NeuroForge is intentionally a **static, client-only application**. It does not process credentials, accept free-form executable input, fetch third-party data at runtime, persist user data, or expose server-side mutation endpoints. This sharply limits the application attack surface, but it is not a claim that no website can ever be attacked.
 
-The repository applies a small set of defense-in-depth controls. Vercel configuration supplies a restrictive content security policy, frame denial, MIME-sniffing protection, referrer controls, and a minimal permissions policy. Continuous integration installs from the lockfile, runs the credential-marker scan, type checks, tests, builds, and fails the job when the production dependency audit reports high-severity issues. Keep the deployment account protected with multi-factor authentication and review dependency updates before merging them.
+The repository applies a small set of defense-in-depth controls. Vercel configuration supplies a restrictive content security policy, frame denial, MIME-sniffing protection, referrer controls, cross-origin isolation headers, a minimal permissions policy, and a one-year immutable cache policy for fingerprinted assets. Continuous integration installs from the lockfile, uses immutable action commit references, scans every tracked text file for credential markers, validates the configured browser protections, type checks, tests, builds, checks delivery size, and fails when the production dependency audit reports high-severity issues. Keep the deployment account protected with multi-factor authentication and review dependency updates before merging them.
 
 | Boundary | Implemented control | Limitation |
 | --- | --- | --- |
 | Source repository | `.gitignore`, credential-marker scan, locked dependency installation, and CI gates. | A secret accidentally committed before scanning must still be rotated outside this repository. |
 | Browser document | CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, referrer policy, and permissions policy. | Hosting-provider account, DNS, TLS, and availability controls remain provider responsibilities. |
 | Training runtime | Fixed datasets, bounded width slider, deterministic seeded data, no remote model execution. | This is an educational in-browser engine, not a sandbox for arbitrary untrusted code. |
+| Release automation | Full-SHA CI action pins, lockfile installation, tracked-file credential scan, dependency audit, and deterministic header/CSP configuration check. | Provider-native alerting and branch-protection rules must be enabled and administered through the repository account. |
 
 ## Deployment
 
