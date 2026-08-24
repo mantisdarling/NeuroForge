@@ -32,3 +32,5 @@
 - [x] Inventory the repository, browser runtime, and live deployment boundaries for the defensive audit.
 - [x] Run non-invasive source, dependency, configuration, header, and browser-boundary security checks.
 - [x] Remediate verified issues, re-run deterministic release gates, and verify the hardened production deployment.
+- [x] Rewrite README.md into a professional, accurate overview of the project, features, architecture, verification, security, and workflow.
+- [x] Validate the rewritten documentation, push it under Mantis Darling, and confirm the repository release.

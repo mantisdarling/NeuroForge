@@ -1,159 +1,130 @@
 # NeuroForge
 
-**NeuroForge** is a browser-native TypeScript laboratory for seeing how a neural network learns. It implements reverse-mode automatic differentiation, small dense networks, optimization, and an interactive computation-graph visualizer **without using a machine-learning runtime**.
+**NeuroForge** is a browser-native learning instrument for reverse-mode automatic differentiation. It makes neural-network computation observable: values move forward through a graph, gradients return backward through local rules, and every experiment runs locally in the browser with TypeScript rather than a browser machine-learning framework.
 
-> “Trace the gradient, not the mystery.”
+> **Trace the gradient, not the mystery.**
 
-Automatic differentiation records how values depend on prior operations, then applies the chain rule backward through that computation graph. Backpropagation is the name commonly used for this reverse traversal when differentiating a scalar learning objective.[1] [2] NeuroForge exposes the process rather than hiding it behind a framework API.
+**Live application:** [neuroforge-nu.vercel.app](https://neuroforge-nu.vercel.app/)
 
-| Area | Included implementation |
+## Why NeuroForge
+
+Automatic differentiation records the operations used to compute a value, then applies the chain rule in reverse to calculate derivatives of a scalar loss. Backpropagation is the familiar neural-network form of that reverse traversal.[1] [2] NeuroForge turns that process into an interactive visual experience rather than treating it as a black-box framework feature.
+
+| Principle | NeuroForge approach |
 | --- | --- |
-| Core math | Elementwise add, subtract, multiply, divide, power, exponential, logarithm, sum, mean, transpose, matrix multiplication, valid Conv2D, max pooling, ReLU, sigmoid, tanh, and stable softmax. |
-| Reverse mode | A topological graph traversal with local backward rules and accumulated gradients at shared parents. |
-| Neural network library | `Linear`, `Conv2D`, `MaxPool2D`, `Tanh`, `ReLU`, `Sigmoid`, `Sequential`, mean-squared error, cross-entropy, SGD, momentum, and Adam. |
-| Live playground | XOR, two-class spiral, sine regression, local digit sketching, weight sensitivity, mini-batches, CNN shapes, optimizer comparison, loss traces, and computation-graph state. |
-| Quality gates | Finite-difference gradient checks, deterministic convergence tests, strict TypeScript checks, production build, dependency audit, and credential-marker scan. |
+| **Inspectable** | Shows computation graphs, local derivative rules, loss traces, and decision fields. |
+| **Local** | Runs training, sketch analysis, and bounded studies entirely in the visitor’s browser. |
+| **From scratch** | Uses a custom TypeScript tensor engine and neural-network primitives, not a browser ML runtime. |
+| **Verified** | Combines finite differences, deterministic convergence studies, strict typing, dependency checks, and an independent PyTorch parity benchmark. |
 
-## Explore the visualizer
+## Interactive features
 
-Run the app and choose a dataset in the operations rail. **Observe 320 epochs** performs a bounded local training session and updates the loss trace, prediction field, node readouts, and gradient magnitude. **Trace next backward pass** executes one real optimization step and moves the active signal through the graph. Every training calculation is local to the browser; there is no model upload, API call, account, or persistence layer.
-
-The graph canvas is the primary observation surface. It shows the forward computation from input to loss, while teal pulses represent reverse gradient flow. On narrow screens, swipe horizontally across the canvas to trace every operation; dataset selection and network-width controls remain available above the action controls.
-
-| Dataset | Task | Target behavior |
-| --- | --- | --- |
-| XOR | Binary classification | Learns a nonlinear decision boundary. |
-| Spiral | Binary classification | Separates two interleaved radial classes. |
-| Sine | Regression | Approximates a sampled sine curve. |
-
-## Extended learning studies
-
-The extended studies are designed as **bounded, browser-local instruments**. They expose a concrete learning mechanism without accepting executable user input, sending drawings to a server, or performing runtime dataset downloads.
-
-| Study | What it does | Verification evidence |
-| --- | --- | --- |
-| Digit field | Trains a compact 196 → 24 → 10 network on 60 fixed, downsampled 14×14 samples selected from the public MNIST training data. A pointer-capable canvas projects a local sketch into the same 14×14 representation and reports all ten probabilities. | `DigitLabSession` test confirms loss reduction and greater than 55% subset accuracy after 42 bounded epochs. |
-| Sensitivity field | Temporarily perturbs the first visible input weight, evaluates the current model, and restores the exact parameter before returning the loss change. | Probe state is non-persistent; it reads the live model but does not call an optimizer. |
-| Mini-batch lens | Lets the learner choose batch sizes of 1, 2, 4, or 8. The training session rotates through real examples and reports the sampled parameter-gradient evidence before the averaged update. | Existing convergence suite continues to pass under default full-batch conditions. |
-| CNN shapes | Runs valid 3×3 Conv2D, ReLU, 2×2 max pooling, flattening, and a dense classifier on a deterministic circle/square/triangle study. | Conv2D finite-difference check and max-pool routing test pass; the bounded shape study exceeds 80% training accuracy. |
-| Optimizer evidence | Replays XOR from identical initial parameters with plain SGD, momentum, and Adam, then overlays the three local loss traces. | Each trace is finite and has the requested deterministic step count. |
-
-The MNIST helper script selects six examples per digit from the public 60,000-image training split, averages each 2×2 cell to produce a local 14×14 grayscale fixture, and encodes it in `client/src/engine/mnistMini.ts`. The app therefore makes **no dataset request at runtime**. The source catalog documents the original images as 28×28 grayscale pixels with ten labels.[4]
-
-## PyTorch parity benchmark
-
-The repository includes an independent CPU PyTorch benchmark for a fixed two-layer float64 network. `scripts/export_engine_parity.mjs` evaluates the same custom-engine forward and backward pass, while `scripts/verify_pytorch.py` builds the equivalent PyTorch tensors with the same inputs, parameters, targets, and loss. The generated `verification/pytorch-parity.json` is the source of the site’s evidence panel.
-
-| Measured field | Actual result |
+| Feature | What it demonstrates |
 | --- | --- |
-| Framework | PyTorch 2.13.0+cpu |
-| Precision | float64 |
+| **Live Lab** | Train XOR, spiral classification, or sine regression; inspect loss, predictions, graph values, and reverse gradients. |
+| **Guided first visit** | A short route explains dataset choice, training, and backward-pass tracing without blocking the lab. |
+| **Computation graph** | Displays a forward route from inputs to loss and a reverse route for gradient accumulation. |
+| **Digit field** | Draw a digit on a local canvas and inspect a 10-class distribution from a bounded 14 × 14 study. |
+| **Sensitivity field** | Temporarily perturb a visible weight, measure the change, then restore the original training state. |
+| **Mini-batch lens** | Compare batch sizes of 1, 2, 4, and 8 while viewing per-example gradients and their mean update. |
+| **CNN shapes** | Train a compact valid-convolution, max-pooling, and dense classifier on deterministic geometry samples. |
+| **Optimizer evidence** | Compare SGD, momentum, and Adam from an identical XOR initialization. |
+| **Accessibility controls** | Includes keyboard focus feedback, keyboard support for the digit canvas, reduced-motion handling, and a persistent high-contrast mode. |
+
+## Architecture
+
+NeuroForge is a **static React and TypeScript application**. There is no authentication system, API server, database, remote model call, upload pipeline, or runtime dataset download. Each browser has its own bounded in-memory training session, which keeps experiments independent and avoids a shared inference or training service.
+
+```text
+Input → linear layer → activation → linear layer → loss
+  x   →   W₁x+b₁   →  tanh(z)  →  W₂a+b₂  →  L
+
+Backward pass: ∂L/∂θ flows from loss to every parent through local rules
+```
+
+The custom engine stores a tensor’s data, gradient buffer, shape, parent references, and local backward rule. Calling `backward()` builds a topological order, seeds the scalar loss gradient, and accumulates every valid contribution while traversing the graph in reverse. This is the core reverse-mode pattern described in automatic-differentiation literature.[1] [2]
+
+| Layer | Included capabilities |
+| --- | --- |
+| **Tensor engine** | Arithmetic, exponential and logarithmic functions, reductions, transpose, matrix multiplication, stable softmax, valid Conv2D, max pooling, and reverse-mode gradient accumulation. |
+| **Neural-network primitives** | `Linear`, `Conv2D`, `MaxPool2D`, `Tanh`, `ReLU`, `Sigmoid`, `Sequential`, MSE, cross-entropy, SGD, momentum, and Adam. |
+| **Presentation layer** | React 19, Vite, canvas/SVG graph views, responsive CSS, deferred advanced-study loading, and a lightweight ambient canvas field. |
+
+## Local study data and parity evidence
+
+The digit study uses a fixed 60-example subset of MNIST, with six samples per digit downsampled from 28 × 28 to 14 × 14 during repository preparation. The generated fixture is committed to the application, so visitors do not download MNIST while using the site.[3]
+
+For an independent numerical check, a fixed two-layer float64 network is evaluated by both the custom engine and PyTorch 2.13.0+cpu using identical inputs, parameters, targets, forward operations, and reverse gradients.
+
+| Parity measurement | Recorded result |
+| --- | --- |
 | Maximum absolute difference | `5.551115123125783e-17` |
 | Largest output difference | `1.3877787807814457e-17` |
 | Largest gradient difference | `5.551115123125783e-17` |
-| Result | Pass, below the benchmark threshold of `1e-10` |
+| Acceptance threshold | `< 1e-10` |
+| Result | Pass |
 
-Reproduce the comparison after installing CPU PyTorch with:
+## Quick start
 
-```bash
-pnpm dlx tsx scripts/export_engine_parity.mjs
-python3 scripts/verify_pytorch.py
-```
-
-## How reverse-mode autograd works
-
-`Tensor` owns flat numeric data, shape, a gradient buffer, references to its parent tensors, and the operation that created it. Each differentiable operation constructs an output tensor and closes over a **local backward rule**. The forward pass builds a directed acyclic computation graph; it does not eagerly apply the full chain rule.
-
-Calling `backward()` first creates a topological ordering from the output back through its parents. It then seeds the scalar output gradient with `1` and runs the stored local rules in reverse topological order. A rule adds its contribution into each parent’s gradient buffer. This accumulation is important whenever a value feeds more than one child: reverse mode sums every child-path contribution, exactly as required by the multivariable chain rule.[2]
-
-```text
-forward:  x ──► linear ──► tanh ──► linear ──► loss
-                                 
-reverse:  ∂L/∂x ◄── local rules ◄── ∂L/∂loss = 1
-```
-
-The `softmax()` implementation subtracts the per-row maximum before exponentiation, which keeps the calculation numerically stable for the small browser demonstrations. Cross-entropy consumes a one-hot target and averages the objective across the batch.
-
-## Correctness verification
-
-Gradient checking compares a derivative produced by reverse mode with a central finite-difference approximation:
-
-```text
-f′(x) ≈ (f(x + ε) − f(x − ε)) / (2ε)
-```
-
-This repository checks a composed scalar expression, matrix multiplication followed by `tanh`, a softmax-log loss, Conv2D kernel gradients, and max-pool gradient routing. The convergence suite also verifies XOR, sine regression, the bounded digit study, the CNN shape study, and matched optimizer traces.
-
-| Command | Result from the final local verification |
-| --- | --- |
-| `pnpm check` | Passed with strict TypeScript checking. |
-| `pnpm test` | Passed: 10 tests across 4 test files, including Conv2D finite differences, max-pool routing, digit-study loss reduction, CNN shape learning, and optimizer-trace checks. |
-| Browser XOR run | 320 epochs; loss decreased from `0.70864` to `0.00058`; accuracy reached `100%`. |
-| `pnpm security:scan` | Passed; no credential markers were found in 15 scanned files. |
-| `pnpm security:config` | Verifies required browser headers, CSP directives, and immutable CI action references. |
-| `pnpm build` | Passed; production Vite bundle produced successfully. |
-| `pnpm delivery:check` | Enforces gzip budgets for emitted JavaScript and CSS assets. |
-| `pnpm audit` | Passed; no known dependency vulnerabilities reported. |
-
-Run the suite yourself with:
+**Prerequisites:** Node.js 22 and pnpm 10.
 
 ```bash
+git clone https://github.com/mantisdarling/NeuroForge.git
+cd NeuroForge
 pnpm install --frozen-lockfile
-pnpm check
-pnpm test
-pnpm security:scan
-pnpm security:config
-pnpm build
-pnpm delivery:check
-pnpm audit
+pnpm dev
 ```
 
-## Scale readiness
+Open the local address printed by Vite. For a production build and preview:
 
-NeuroForge is a **static, client-only experience**. Every visitor receives cacheable build assets, while training, sketching, graph updates, and bounded experiments execute inside that visitor’s browser. The site therefore has no shared application runtime, model queue, database, or per-request compute path to contend across users.
+```bash
+pnpm build
+pnpm preview
+```
 
-| Scale control | Current implementation | Operational effect |
-| --- | --- | --- |
-| Static asset caching | Fingerprinted production assets are configured for one-year immutable caching. | Repeat visits and releases reuse unchanged client assets instead of re-running application work on an origin. |
-| Initial-load deferral | The advanced-study module loads only when the visitor approaches the Studies section or opens its anchor directly. | The hero and Live Lab avoid downloading or initializing the heaviest local study code on first view. |
-| Bounded local compute | Digit, CNN, and optimizer demonstrations have fixed dataset sizes and step counts; their actions immediately expose progress and disable duplicate runs. | One visitor’s experiments remain isolated from every other visitor and do not create a shared server workload. |
-| Delivery budget gate | `pnpm delivery:check` runs after each production build and is enforced in continuous integration. | JavaScript or stylesheet growth that crosses the gzip budget fails before release. |
+## Quality checks
 
-This makes the application appropriate for a **target of approximately 1,000 users** when the selected hosting account has adequate static bandwidth and request allowance. Actual availability still depends on the hosting provider, DNS, browser/device capability, and traffic pattern; this repository does not claim to replace provider-level capacity monitoring or DDoS protection. Review provider analytics and quota settings before a public launch, then monitor them during the first release window.
+The repository has deterministic local checks and a GitHub Actions workflow for pushes and pull requests to `main`.
+
+```bash
+pnpm check            # strict TypeScript
+pnpm test             # 10 tests across 4 suites
+pnpm security:scan    # credential-marker scan across tracked text files
+pnpm security:config  # headers, CSP, and CI action-pin validation
+pnpm build            # production Vite build
+pnpm delivery:check   # gzip delivery budgets
+pnpm audit            # production dependency audit
+```
+
+| Verification area | Coverage |
+| --- | --- |
+| **Gradient correctness** | Finite-difference tests for scalar expressions, matrix operations, softmax/log loss, Conv2D kernels, and max-pool routing. |
+| **Learning behavior** | Deterministic checks for sine regression, digit-study loss reduction, CNN-shape learning, and optimizer trace construction. |
+| **Type and build safety** | Strict TypeScript compilation and a production Vite build. |
+| **Supply-chain and configuration checks** | Locked installation, production dependency audit, tracked-file secret markers, full-SHA CI action pins, and deterministic header/CSP validation. |
+
+## Security and delivery posture
+
+NeuroForge intentionally minimizes its application attack surface: it does not accept executable input, process credentials, persist user data, or expose server-side mutation endpoints. The production configuration adds a restrictive Content Security Policy, frame denial, MIME-sniffing protection, referrer controls, permissions limits, cross-origin protections, and HTTPS upgrading. Fingerprinted build assets are served with immutable caching, while the advanced-study code is deferred until a visitor approaches or opens that section.
+
+These controls reduce specific risks; they do **not** guarantee that any website can never be attacked. Hosting-account security, DNS, provider availability controls, branch protection, alert configuration, dependency updates, and incident response remain operational responsibilities.
 
 ## Project structure
 
 ```text
-client/src/engine/tensor.ts      Reverse-mode tensor and differentiable operations
-client/src/engine/nn.ts          Dense/convolutional layers, losses, seeded initialization, SGD, and Adam
-client/src/engine/training.ts    Deterministic toy datasets, mini-batch session, and sensitivity probe
-client/src/engine/advanced.ts    Digit, CNN-shape, and optimizer-comparison learning studies
-client/src/engine/mnistMini.ts   Browser-local selected MNIST fixture; generated once, never fetched at runtime
-client/src/components/           SVG graph, guided track, field views, and advanced learning studio
-tests/                           Gradient checks and convergence tests
-scripts/prepare_mnist_subset.py  Deterministic MNIST fixture preparation
-scripts/export_engine_parity.mjs Custom-engine parity export
-scripts/verify_pytorch.py        Independent CPU PyTorch comparison
-.github/workflows/ci.yml         Push and pull-request verification gates
-vercel.json                      Static-hosting security headers
+client/src/
+  engine/                  Custom tensor engine, layers, optimizers, and bounded studies
+  components/              Graph, lab, guided route, and visual learning surfaces
+  App.tsx                  Application composition and deferred advanced-study boundary
+tests/                     Gradient, training, convolution, and advanced-study checks
+scripts/                   Fixture preparation, parity export, secret scan, and config checks
+.github/workflows/ci.yml   Deterministic pull-request and push verification
+vercel.json                Static deployment, cache policy, and browser security headers
 ```
-
-## Security posture
-
-NeuroForge is intentionally a **static, client-only application**. It does not process credentials, accept free-form executable input, fetch third-party data at runtime, persist user data, or expose server-side mutation endpoints. This sharply limits the application attack surface, but it is not a claim that no website can ever be attacked.
-
-The repository applies a small set of defense-in-depth controls. Vercel configuration supplies a restrictive content security policy, frame denial, MIME-sniffing protection, referrer controls, cross-origin isolation headers, a minimal permissions policy, and a one-year immutable cache policy for fingerprinted assets. Continuous integration installs from the lockfile, uses immutable action commit references, scans every tracked text file for credential markers, validates the configured browser protections, type checks, tests, builds, checks delivery size, and fails when the production dependency audit reports high-severity issues. Keep the deployment account protected with multi-factor authentication and review dependency updates before merging them.
-
-| Boundary | Implemented control | Limitation |
-| --- | --- | --- |
-| Source repository | `.gitignore`, credential-marker scan, locked dependency installation, and CI gates. | A secret accidentally committed before scanning must still be rotated outside this repository. |
-| Browser document | CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, referrer policy, and permissions policy. | Hosting-provider account, DNS, TLS, and availability controls remain provider responsibilities. |
-| Training runtime | Fixed datasets, bounded width slider, deterministic seeded data, no remote model execution. | This is an educational in-browser engine, not a sandbox for arbitrary untrusted code. |
-| Release automation | Full-SHA CI action pins, lockfile installation, tracked-file credential scan, dependency audit, and deterministic header/CSP configuration check. | Provider-native alerting and branch-protection rules must be enabled and administered through the repository account. |
 
 ## Deployment
 
-The repository is prepared for static deployment on Vercel. Import `mantisdarling/NeuroForge`, retain the default build command `pnpm build`, and publish the generated `dist` directory. The included `vercel.json` applies the browser-facing security headers and immutable cache policy for fingerprinted build assets at deployment time.
+The project is ready for Vercel static deployment. Import the repository, retain `pnpm build` as the build command, and publish the generated `dist` directory. The included `vercel.json` applies the production browser headers and immutable cache policy for fingerprinted assets.
 
 ## References
 
@@ -161,6 +132,4 @@ The repository is prepared for static deployment on Vercel. Import `mantisdarlin
 
 [2] [Auto-eD, “Module 3: The Reverse Mode of Automatic Differentiation.”](https://auto-ed.readthedocs.io/en/latest/mod3.html)
 
-[3] [Dive into Deep Learning, “Automatic Differentiation.”](https://d2l.ai/chapter_preliminaries/autograd.html)
-
-[4] [TensorFlow Datasets, “MNIST.”](https://www.tensorflow.org/datasets/catalog/mnist)
+[3] [TensorFlow Datasets, “MNIST.”](https://www.tensorflow.org/datasets/catalog/mnist)
