@@ -36,3 +36,5 @@
 - [x] Validate the rewritten documentation, push it under Mantis Darling, and confirm the repository release.
 - [x] Add and validate a professional README placeholder for screenshots or a demo GIF, then push the documentation update.
 - [x] Remove the README screenshot or demo-GIF placeholder, validate the revert, and push the documentation update.
+- [x] Add an appropriate open-source license and a concise CONTRIBUTING.md guide, then link both from README.md.
+- [x] Validate the license and contributor documentation, push it under Mantis Darling, and confirm the repository release.

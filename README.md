@@ -6,6 +6,10 @@
 
 **Live application:** [neuroforge-nu.vercel.app](https://neuroforge-nu.vercel.app/)
 
+## Open source
+
+NeuroForge is available under the permissive [MIT License](LICENSE). Contributions are welcome; please follow the focused workflow and quality expectations in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Why NeuroForge
 
 Automatic differentiation records the operations used to compute a value, then applies the chain rule in reverse to calculate derivatives of a scalar loss. Backpropagation is the familiar neural-network form of that reverse traversal.[1] [2] NeuroForge turns that process into an interactive visual experience rather than treating it as a black-box framework feature.
