@@ -6,6 +6,12 @@
 
 **Live application:** [neuroforge-nu.vercel.app](https://neuroforge-nu.vercel.app/)
 
+## Screenshots and demo
+
+> **Media placeholder:** Add a product screenshot or a short demo GIF here to show the Live Lab, computation graph, and local learning studies in action.
+
+<!-- Example: ![NeuroForge Live Lab — computation graph and training controls](docs/media/neuroforge-live-lab.gif) -->
+
 ## Why NeuroForge
 
 Automatic differentiation records the operations used to compute a value, then applies the chain rule in reverse to calculate derivatives of a scalar loss. Backpropagation is the familiar neural-network form of that reverse traversal.[1] [2] NeuroForge turns that process into an interactive visual experience rather than treating it as a black-box framework feature.

@@ -34,3 +34,4 @@
 - [x] Remediate verified issues, re-run deterministic release gates, and verify the hardened production deployment.
 - [x] Rewrite README.md into a professional, accurate overview of the project, features, architecture, verification, security, and workflow.
 - [x] Validate the rewritten documentation, push it under Mantis Darling, and confirm the repository release.
+- [x] Add and validate a professional README placeholder for screenshots or a demo GIF, then push the documentation update.
