@@ -113,6 +113,19 @@ NeuroForge intentionally minimizes its application attack surface: it does not a
 
 These controls reduce specific risks; they do **not** guarantee that any website can never be attacked. Hosting-account security, DNS, provider availability controls, branch protection, alert configuration, dependency updates, and incident response remain operational responsibilities.
 
+## Scale readiness
+
+NeuroForge is prepared for a **target of approximately 1,000 users** on a hosting account with sufficient static bandwidth and request allowance. The application has no shared training or inference service: every learning experiment runs independently in the visitor’s browser, so one learner’s work does not consume a central application runtime.
+
+| Scale control | Current implementation | Effect |
+| --- | --- | --- |
+| **Static delivery** | Fingerprinted build assets use immutable caching. | Unchanged assets can be reused across visits and releases. |
+| **Deferred studies** | The advanced-study module loads when a visitor approaches or opens the Studies section. | The initial hero and Live Lab avoid starting the heaviest local study code. |
+| **Bounded local compute** | Digit, CNN, and optimizer studies use fixed data and step counts with duplicate-run guards. | Per-user compute remains predictable and isolated in the browser. |
+| **Delivery budget** | `pnpm delivery:check` enforces gzip limits after every production build and in continuous integration. | Asset-size regressions are caught before release. |
+
+This target is an architecture and delivery-readiness goal, not a guarantee of provider capacity or availability. Monitor hosting analytics, quota settings, and real traffic behavior during public releases.
+
 ## Project structure
 
 ```text
