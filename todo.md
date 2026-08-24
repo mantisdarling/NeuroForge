@@ -17,3 +17,6 @@
 - [x] Implement and gradient-check convolution and pooling with a CNN shape-classification demonstration.
 - [x] Add SGD, momentum, and Adam comparison with verifiable numerical parity against PyTorch.
 - [x] Add the engine teaching section, update documentation, run full security/math/build checks, and confirm the live deployment.
+- [x] Add a subtle dark ambient background animation that preserves readability and disables itself for reduced-motion preferences.
+- [x] Add smooth, theme-preserving hover and focus feedback to buttons, cards, and interactive Live Lab controls.
+- [x] Verify the motion refinement across desktop, mobile, reduced-motion settings, production build, and the live deployment.

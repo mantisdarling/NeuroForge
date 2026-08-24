@@ -1,5 +1,6 @@
 /** Signal Observatory: a large-scale, asymmetric learning instrument with an expansive hero, a full live lab, and a technical story from trace to proof. */
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { AmbientField } from "./components/AmbientField";
 import { DecisionField } from "./components/DecisionField";
 import { GuidedTrack } from "./components/GuidedTrack";
 import { GraphCanvas } from "./components/GraphCanvas";
@@ -103,6 +104,7 @@ export default function App() {
 
   return (
     <main className="site-shell">
+      <AmbientField />
       <header className="global-nav">
         <a className="brand" href="#top" aria-label="NeuroForge home"><span className="brand-mark" aria-hidden="true"><span /><span /><span /></span><span>NEURO<span>FORGE</span></span></a>
         <nav aria-label="Primary navigation"><a href="#lab">Live lab</a><a href="#studies">Studies</a><a href="#method">Method</a><a href="#engine">Engine</a></nav>
