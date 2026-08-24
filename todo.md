@@ -20,3 +20,5 @@
 - [x] Add a subtle dark ambient background animation that preserves readability and disables itself for reduced-motion preferences.
 - [x] Add smooth, theme-preserving hover and focus feedback to buttons, cards, and interactive Live Lab controls.
 - [x] Verify the motion refinement across desktop, mobile, reduced-motion settings, production build, and the live deployment.
+- [x] Apply consistent hover-matched visible focus states to every keyboard-reachable interactive element.
+- [x] Verify logical tab order, visible focus indicators, reduced-motion behavior, production build, and deployed keyboard navigation.
