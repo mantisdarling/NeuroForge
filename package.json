@@ -1,0 +1,31 @@
+{
+  "name": "neuroforge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An interactive TypeScript autograd engine and neural-network visualizer.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "security:scan": "node scripts/scan-secrets.mjs",
+    "audit": "pnpm audit --prod --audit-level=high"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react": "^5.0.2",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.3",
+    "vitest": "^3.2.4"
+  },
+  "packageManager": "pnpm@10.15.1"
+}
+
