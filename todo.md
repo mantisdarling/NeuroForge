@@ -39,3 +39,4 @@
 - [x] Add an appropriate open-source license and a concise CONTRIBUTING.md guide, then link both from README.md.
 - [x] Validate the license and contributor documentation, push it under Mantis Darling, and confirm the repository release.
 - [x] Add explicit, evidence-based README coverage for the approximately 1,000-user static-delivery target and validate the complete feature summary.
+- [x] Add and validate an accessible technical architecture diagram for static delivery, browser-local learning, quality gates, and scale readiness in README.md.

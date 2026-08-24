@@ -39,6 +39,38 @@ Automatic differentiation records the operations used to compute a value, then a
 
 NeuroForge is a **static React and TypeScript application**. There is no authentication system, API server, database, remote model call, upload pipeline, or runtime dataset download. Each browser has its own bounded in-memory training session, which keeps experiments independent and avoids a shared inference or training service.
 
+### System architecture
+
+```mermaid
+flowchart LR
+  Source["GitHub repository\nsource, tests, and documentation"] --> Gates["CI quality gates\ntype checks · tests · security scans\nbuild · delivery budget"]
+  Gates --> Deploy["Static deployment\nfingerprinted assets · immutable cache"]
+
+  Deploy --> VisitorA["Visitor A browser"]
+  Deploy --> VisitorB["Visitor B browser"]
+  Deploy --> VisitorN["Additional visitors"]
+
+  subgraph Runtime["Each visitor: isolated browser-local runtime"]
+    App["React + TypeScript\nSignal Observatory"]
+    Engine["Custom tensor engine\nreverse-mode autograd"]
+    Lab["Live Lab\nXOR · Spiral · Sine"]
+    Studies["Deferred advanced studies\nDigit · sensitivity · CNN · optimizers"]
+    App --> Engine
+    App --> Lab
+    App --> Studies
+    Lab --> Engine
+    Studies --> Engine
+  end
+
+  VisitorA --> Runtime
+  VisitorB --> Runtime
+  VisitorN --> Runtime
+
+  Evidence["Verification evidence\nfinite differences · convergence tests\nPyTorch float64 parity"] --> Gates
+```
+
+The deployment serves the same cacheable static build to each visitor, while every Live Lab session and advanced study executes independently in that visitor’s browser. This separates delivery scale from learning compute and is the basis of the qualified approximately 1,000-user readiness target described below.
+
 ```text
 Input → linear layer → activation → linear layer → loss
   x   →   W₁x+b₁   →  tanh(z)  →  W₂a+b₂  →  L
