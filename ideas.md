@@ -13,3 +13,4 @@ The design prioritizes traceable computation, purposeful hierarchy, quiet precis
 - The computation graph is the primary hero object: node values, edge direction, gradient state, and loss consequence visually dominate the first viewport.
 - The forward/reverse node-and-arc geometry recurs in signal spines, edge chevrons, state markers, and graph headings as NeuroForge’s visual fingerprint.
 - Operational copy names the observable action or evidence state, such as “Trace next backward pass,” rather than generic UI verbs.
+- The product now uses a long-form learning-instrument arc: an expansive evidence-led hero, a full-width operational lab, a reverse-mode method section, a compact engine specification field, and a final route back into the live lab. This adds product scale without borrowing the reference product’s composition or visual treatment.

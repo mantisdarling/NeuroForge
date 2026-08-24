@@ -6,3 +6,5 @@
 - [x] Re-run all application, security, and production-build checks after the visual refinements.
 - [ ] Import `mantisdarling/NeuroForge` into Vercel after the user completes Vercel authorization.
 - [x] Confirm the Vercel import uses the repository’s `pnpm build` command and `dist` output directory.
+- [x] Expand NeuroForge from a compact playground into a fuller multi-section product experience without copying the reference site.
+- [x] Verify desktop and mobile composition scale, visual hierarchy, and alignment after the experience expansion.
